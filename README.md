@@ -2,7 +2,8 @@
 
 ## newscratch
 A scratchwindow manager for [bspwm](https://github.com/baskerville/bspwm).
-
+### Demo:
+![scratchpads](scratchpads.gif)
 ### Usage:
 1. Add the following rule to your bspwmrc config file:	
 ```
