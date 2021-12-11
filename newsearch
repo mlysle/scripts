@@ -1,0 +1,62 @@
+#!/bin/sh
+# URLs will be directly handed to the browser.
+# Designed to mimic Firefox keywords and aliases because it cannot handle them directly via command line. 
+browser=${BROWSER:-firefox}
+pgrep -x dmenu && exit
+
+query=$(dmenu -p "NewSearch" -nb "#222222" -nf "#bbbbbb" -sb "#420000" -sf "#eeeeee" -fn "monospace:size=14")
+
+if [ -z "$query" ]; then
+	exit 1
+fi
+
+read -ra searcharray <<<"$query"
+
+alias_check() {
+	local alias=${searcharray[0]}
+	if [ ${#searcharray[@]} -eq 1 ]; then
+		case ${alias} in
+			"g") $browser "https://boards.4channel.org/g/";;
+			"biz") $browser "https://boards.4channel.org/biz/";;
+			"sci") $browser "https://boards.4channel.org/sci/";;
+			* ) return 1;; # looks like an alias query, but alias not defined.
+		esac
+	else
+		return 1 # not an alias query
+	fi
+}
+
+keyword_check() {
+	local keyword=${searcharray[0]}
+	local query=${searcharray[@]:1}
+	if [ ${#searcharray[@]} -lt 4 ] && [ ${#keyword} -lt 3 ]; then
+		 case ${keyword} in
+			 "a") $browser "https://wiki.archlinux.org/index.php?search=$query&title=Special%3ASearch&go=Go";;
+			 "w") $browser "https://en.wikipedia.org/w/index.php?title=Special%3ASearch&search=$query";;
+			 "y") $browser "https://www.youtube.com/results?search_query=$query";;
+			 "i") $browser "https://invidious.lysle.org/search?q=$query";;
+			 "wt") lang_check;;
+			 *) return 1;; # looks like a keyword query, but keyword not defined/
+		 esac
+	else
+		return 1 # not an keyword query
+	fi
+}
+
+lang_check() {
+	local lang=${searcharray[1]}
+	local query=${searcharray[@]:2}
+	case $lang in
+		# if I am using one of these languages that means there are three fields: wt - $lang - $query (cont. below)
+		"la") $browser "https://en.wiktionary.org/wiki/Special:Search?search=$query#Latin";;
+		"de") $browser "https://en.wiktionary.org/wiki/Special:Search?search=$query#German";;
+		"ru") $browser "https://en.wiktionary.org/wiki/Special:Search?search=$query#Russian";;
+		# but if $lang doesn't match any of the above then I probably want plain old English - which means the query begins on the second field
+		*) $browser "https://en.wiktionary.org/wiki/Special:Search?search=${searcharray[@]:1}#English";;
+	esac
+}
+
+# 1. Check for defined aliases
+# 2. Checek for defined keywords
+# 3. Nothing? Chuck it into a search engine.
+( ( alias_check || keyword_check || $browser "https://duckduckgo.com/?q=$query&t=ffab&atb=v1-1" ) && wmctrl -x -a "$browser" )

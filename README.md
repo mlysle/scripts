@@ -8,8 +8,8 @@ A scratchwindow manager for [bspwm](https://github.com/baskerville/bspwm).
 	bspc rule -a dropdown sticky=on state=floating center=on rectangle=1000x800+0+0
 2. Add newscratch keybinds to your window manager.
 
-## search
-Browser-independent search utility using dmenu and wmctrl .
+## newsearch
+Browser-independent search utility using dmenu and wmctrl.
 
 ###Usage examples:
 * "wt query" - searches wiktionary for the definition of *query* in English.
