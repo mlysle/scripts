@@ -1,0 +1,33 @@
+#!/bin/sh
+
+# No argument? Then don't bother.
+if [ $# == 0 ]; then
+	echo "no argument, exiting"
+	exit 0
+fi
+
+# Get the PID of the requested dropdown
+pid=$(xdotool search --class "dropdown" getwindowpid %@ | xargs -I{} xdotool search --all --pid {} --classname "$1")
+
+hide_all() {
+	pids=$(xdotool search --class "dropdown")
+	for dropdown in $pids; do
+		if [ "$dropdown" == "$2" ]; then
+			echo "passed $1 (PID: $2)"
+			continue
+		fi
+		[ -n "$dropdown" ] && bspc node "$dropdown" --flag hidden=on 
+	done
+}
+
+# Toggle or start if not available
+if [ -n "$pid" ]; then
+	echo "toggled and focussed on $1 (PID: $pid)"
+	bspc node "$pid" --flag hidden -f
+	hide_all "$1" "$pid"
+else
+	$TERMINAL --class $1,dropdown -e "$1" &
+	# $TERMINAL -c dropdown -n "$1" -e "$1" &
+	echo "dropdown not found, starting $1 (PID: $!)..."
+	hide_all "$1" "$!"
+fi

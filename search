@@ -1,0 +1,56 @@
+#!/bin/sh
+# URLs will be directly handed to the browser.
+# Designed to mimic Firefox keywords and aliases because it cannot handle them directly via command line. 
+browser=${BROWSER:-firefox}
+
+pgrep -x dmenu && exit
+
+#i3-msg gaps top all set 44
+
+#choice=$(echo "dmenu" | dmenu -x -13 -w 1933 -h 44  -y 44 -i) 
+
+choice=$(dmenu -p "Search" -nb "#222222" -nf "#bbbbbb" -sb "#420000" -sf "#eeeeee" -fn "monospace:size=14")
+
+#i3-msg gaps top all set 0
+if [ -z "$choice" ]; then
+	exit 1
+fi
+
+lang_choice() {
+lang=$(echo "$1" | cut -d " " -f 2)
+query=$(echo "$1" | cut -d " " -f 3-)
+case $lang in
+	# if I am using one of these languages that means there are three fields: wt - $lang - $query (cont. below)
+	"la") $browser "https://en.wiktionary.org/wiki/Special:Search?search=$query#Latin";;
+	"de") $browser "https://en.wiktionary.org/wiki/Special:Search?search=$query#German";;
+	"ru") $browser "https://en.wiktionary.org/wiki/Special:Search?search=$query#Russian";;
+	# but if $lang doesn't match any of the above then I probably want plain old English - which means the query begins on the second field
+	*) $browser "https://en.wiktionary.org/wiki/Special:Search?search=$(echo "$1" | cut -d " " -f 2-)#English";;
+esac
+}
+
+# browser keywords
+if echo "$choice" | grep "^.\{1,2\} .*"; then
+	query=$(echo "$choice" | cut -d " " -f 2-)
+	case $(echo "$choice" | cut -d " " -f 1) in
+		"a") $browser "https://wiki.archlinux.org/index.php?search=$query&title=Special%3ASearch&go=Go";;
+		"d") $browser "https://duckduckgo.com/?q=$query&t=ffab&atb=v1-1";;
+		"w") $browser "https://en.wikipedia.org/w/index.php?title=Special%3ASearch&search=$query";;
+		"y") $browser "https://www.youtube.com/results?search_query=$query";;
+		"i") $browser "https://invidious.snopyta.org/search?q=$query";;
+		"wt") lang_choice "$choice";;
+	esac
+# aliases		
+elif echo "$choice" | grep "^.\{1,3\}$"; then
+	case $choice in
+		"g") $browser "https://boards.4channel.org/g/";;
+		"biz") $browser "https://boards.4channel.org/biz/";;
+		"sci") $browser "https://boards.4channel.org/sci/";;
+		"v") $browser "https://boards.4channel.org/v/";;
+		"vg") $browser "https://boards.4channel.org/vg/";;
+	esac
+else
+	$browser "https://duckduckgo.com/?q=$choice&t=ffab&atb=v1-1"
+fi
+wmctrl -x -a "$browser"
+#i3-msg fullscreen enable
